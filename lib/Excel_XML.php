@@ -110,6 +110,7 @@ class Excel_XML
          */
         public function writeWorkbook($filename, $path = '')
         {
+            //echo $path; exit;
                 $this->generateWorkbook();
                 $filename = $this->getWorkbookTitle($filename);
                 if (!$handle = @fopen($path . $filename, 'w+')):
@@ -220,26 +221,24 @@ class Excel_XML
          * @todo Add a security check to testify whether this is an array
          */
         private function generateWorksheet($item)
-        {
+        {     
                 $this->sOutput .= sprintf("<Worksheet ss:Name=\"%s\">\n    <Table>\n", $item['title']);
                 if (count($item['data']))
                         $item['data'] = array_slice($item['data'], 0, 65536);
-                foreach ($item['data'] as $k => $v):
-                        $this->generateRow($v);
+                foreach ($item['data'] as $k=>$v):
+                        $this->generateRow($k,$v);                       
                 endforeach;
-                $this->sOutput .= "    </Table>\n</Worksheet>\n";
+                $this->sOutput .= "    </Table>\n</Worksheet>\n";           
         }
 
         /**
          * Generate the single row
          * @param array Item with row data
          */
-        private function generateRow($item)
-        {
+        private function generateRow($key, $value)
+        {          
                 $this->sOutput .= "        <Row>\n";
-                foreach ($item as $k => $v):
-                        $this->generateCell($v);
-                endforeach;
+                        $this->generateCell($key, $value);
                 $this->sOutput .= "        </Row>\n";
         }
 
@@ -247,17 +246,17 @@ class Excel_XML
          * Generate the single cell
          * @param string $item Cell data
          */
-        private function generateCell($item)
+        private function generateCell($key, $value)
         {
                 $type = 'String';
-                if (is_numeric($item)):
+                if (is_numeric($value)):
                         $type = 'Number';
-                        if ($item[0] == '0' && strlen($item) > 1 && $item[1] != '.'):
+                        if ($value[0] == '0' && strlen($value) > 1 && $value[1] != '.'):
                                 $type = 'String';
                         endif;
                 endif;
-                $item = str_replace('&#039;', '&apos;', htmlspecialchars($item, ENT_QUOTES));
-                $this->sOutput .= sprintf("            <Cell><Data ss:Type=\"%s\">%s</Data></Cell>\n", $type, $item);
+                $item = str_replace('&#039;', '&apos;', htmlspecialchars($value, ENT_QUOTES));
+                $this->sOutput .= sprintf("            <Cell><Data ss:Type=\"String\">%s</Data></Cell><Cell><Data ss:Type=\"%s\">%s</Data></Cell>\n", $key, $type, $value);
         }
 
         /**
